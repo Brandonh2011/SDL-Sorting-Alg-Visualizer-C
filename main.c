@@ -14,7 +14,8 @@ typedef enum {
 	BUBBLE_SORT,
 	INSERTION_SORT,
 	QUICK_SORT,
-	MERGE_SORT
+	MERGE_SORT,
+	HEAP_SORT
 } SortType;
 
 void renderText(SDL_Renderer* renderer, TTF_Font* font, int x, int y, const char* text);
@@ -26,6 +27,8 @@ bool quickSortHelper(SDL_Renderer* renderer, TTF_Font* font, int* array, int low
 bool quickSort(SDL_Renderer* renderer, TTF_Font* font, int* array, int size, SortType sortType);
 bool mergeSort(SDL_Renderer* renderer, TTF_Font* font, int* array, int size, SortType sortType);
 bool mergeSortHelper(SDL_Renderer* renderer, TTF_Font* font, int* array, int left, int right, int* temp, int* comparisons, int* swaps, SortType sortType, bool* quitFlag);
+void heapify(SDL_Renderer* renderer, TTF_Font* font, int* array, int size, int i, int* comparisons, int* swaps, SortType sortType);
+bool heapSort(SDL_Renderer* renderer, TTF_Font* font, int* array, int size, SortType sortType);
 
 int main()
 {
@@ -103,6 +106,11 @@ int main()
 					currentAlg = MERGE_SORT;
 					drawBars(renderer, font, array, NUM_BARS, -1, -1, 0, 0, currentAlg);
 				}
+				else if (e.key.keysym.sym == SDLK_5)
+				{
+					currentAlg = HEAP_SORT;
+					drawBars(renderer, font, array, NUM_BARS, -1, -1, 0, 0, currentAlg);
+				}
 			}
 		}
 
@@ -122,6 +130,9 @@ int main()
 					break;
 				case MERGE_SORT:
 					result = mergeSort(renderer, font, array, NUM_BARS, currentAlg);
+					break;
+				case HEAP_SORT:
+					result = heapSort(renderer, font, array, NUM_BARS, currentAlg);
 					break;
 			}
 
@@ -189,6 +200,7 @@ void drawBars(SDL_Renderer* renderer, TTF_Font* font, int* array, int size, int 
 	if (sortType == INSERTION_SORT) algName = "Insertion Sort";
 	if (sortType == QUICK_SORT)	 algName = "Quick Sort";
 	if (sortType == MERGE_SORT)	 algName = "Merge Sort";
+	if (sortType == HEAP_SORT) algName = "Heap Sort";
 	
 	char stats[128];
 	snprintf(stats, sizeof(stats), "Alg: %s  Number of Bars: %d  Comparisons: %d  Swaps: %d", algName, NUM_BARS, comparisons, swaps);
@@ -442,3 +454,79 @@ bool mergeSort(SDL_Renderer* renderer, TTF_Font* font, int* array, int size, Sor
 	drawBars(renderer, font, array, size, -1, -1, comparisons, swaps, sortType);
 	return result;
 }
+
+void heapify(SDL_Renderer* renderer, TTF_Font* font, int* array, int size, int i, int* comparisons, int* swaps, SortType sortType)
+{
+	int largest = i;
+	int left = 2 * i + 1;
+	int right = 2 * i + 2;
+
+	if (left < size && array[left] > array[largest])
+	{
+		(*comparisons)++;
+		largest = left;
+	}
+
+	if (right < size && array[right] > array[largest])
+	{
+		(*comparisons)++;
+		largest = right;
+	}
+
+	if (largest != i)
+	{
+		int temp = array[i];
+		array[i] = array[largest];
+		array[largest] = temp;
+		(*swaps)++;
+
+		drawBars(renderer, font, array, NUM_BARS, i, largest, *comparisons, *swaps, sortType);
+		SDL_Delay(DELAY);
+
+		heapify(renderer, font, array, size, largest, comparisons, swaps, sortType);
+	}
+}
+
+bool heapSort(SDL_Renderer* renderer, TTF_Font* font, int* array, int size, SortType sortType)
+{
+	int comparisons = 0;
+	int swaps = 0;
+	SDL_Event e;
+
+	for (int i = size / 2 - 1; i >= 0; i--)
+	{
+		while (SDL_PollEvent(&e))
+		{
+			if (e.type == SDL_QUIT) return false;
+		}
+		heapify(renderer, font, array, size, i, &comparisons, &swaps, sortType);
+	}
+
+	for (int i = size - 1; i > 0; i--)
+	{
+		while (SDL_PollEvent(&e))
+		{
+			if (e.type == SDL_QUIT) return false;
+		}
+
+		int temp = array[0];
+		array[0] = array[i];
+		array[i] = temp;
+		swaps++;
+
+		drawBars(renderer, font, array, NUM_BARS, 0, i, comparisons, swaps, sortType);
+		SDL_Delay(DELAY);
+
+		heapify(renderer, font, array, i, 0, &comparisons, &swaps, sortType);
+	}
+
+	for (int i = 0; i < size; i++)
+	{
+		drawBars(renderer, font, array, size, i, -1, comparisons, swaps, sortType);
+		SDL_Delay(10);
+	}
+
+	drawBars(renderer, font, array, size, -1, -1, comparisons, swaps, sortType);
+	return true;
+}
+
