@@ -544,4 +544,3 @@ bool heapSort(SDL_Renderer* renderer, TTF_Font* font, int* array, int size, Sort
 	drawBars(renderer, font, array, size, -1, -1, comparisons, swaps, sortType);
 	return true;
 }
-
